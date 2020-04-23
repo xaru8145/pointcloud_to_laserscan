@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="rviz" default="true"/>
+
+    <!-- run laserscan_to_pointcloud node -->
+    <node pkg="pointcloud_to_laserscan" type="laserscan_to_pointcloud_node" name="laserscan_to_pointcloud">
+
+        <remap from="scan_in" to="/kalman_filter_node/laserscan"/>
+        <remap from="cloud" to="/kalman_filter_node/cloud"/>
+        <rosparam>
+            #target_frame: scan # Leave disabled to output pointcloud in scan frame
+            transform_tolerance: 0.01
+
+            # Concurrency level, affects number of pointclouds queued for processing and number of threads used
+            # 0 : Detect number of cores
+            # 1 : Single threaded
+            # 2->inf : Parallelism level
+            concurrency_level: 1
+        </rosparam>
+
+    </node>
+
+    <node pkg="octomap_server" type="octomap_server_node" name="octomap_ROR" output="screen">
+      <rosparam command="load" file="$(find radar_rig)/params/octomap.yaml"/>
+
+      <remap from="cloud_in" to="/kalman_filter_node/cloud"/>
+      <remap from="octomap_point_cloud_centers" to="kalman_filter_node/point_cloud_centers"/>
+      <remap from="occupied_cells_vis_array" to="kalman_filter_node/occupied_cells_vis_array"/>
+      <remap from="free_cells_vis_array" to="kalman_filter_node/free_cells_vis_array"/>
+      <remap from="projected_map" to="kalman_filter_node/map"/>
+      <remap from="octomap_binary" to="kalman_filter_node/octomap_binary"/>
+      <remap from="octomap_full" to="kalman_filter_node/octomap_full"/>
+    </node>
+
+    <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" args="-d $(find pointcloud_to_laserscan)/rviz/visualize_octomap.rviz"/>
+
+</launch>
